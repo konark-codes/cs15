@@ -34,12 +34,14 @@ interface AiFeatureConfig {
 }
 
 interface AiConfig {
-  activeProvider: 'anthropic' | 'openai' | 'xai' | 'minimax';
+  activeProvider: 'anthropic' | 'openai' | 'xai' | 'minimax' | 'gemini' | 'custom';
   providers: {
     anthropic: ProviderOverride;
     openai: ProviderOverride;
     xai: ProviderOverride;
     minimax: ProviderOverride;
+    gemini: ProviderOverride;
+    custom: ProviderOverride;
   };
   features: {
     duplicateDetection: AiFeatureConfig;
@@ -92,6 +94,24 @@ const PROVIDER_META = {
     color: 'bg-blue-100 border-blue-300 text-blue-800',
     badgeColor: 'bg-blue-200 text-blue-800',
   },
+  gemini: {
+    label: 'Google Gemini',
+    description: 'Highly capable, cost-efficient reasoning models',
+    defaultModel: 'gemini-1.5-flash',
+    defaultBaseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    docsUrl: 'https://aistudio.google.com/app/apikey',
+    color: 'bg-teal-100 border-teal-300 text-teal-800',
+    badgeColor: 'bg-teal-200 text-teal-800',
+  },
+  custom: {
+    label: 'Custom Provider',
+    description: 'Connect any self-hosted or OpenAI-compatible endpoint',
+    defaultModel: 'custom-model',
+    defaultBaseURL: 'http://localhost:11434/v1',
+    docsUrl: 'https://github.com/ollama/ollama',
+    color: 'bg-gray-100 border-gray-300 text-gray-800',
+    badgeColor: 'bg-gray-200 text-gray-800',
+  },
 } as const;
 
 const FEATURE_LABELS: Record<keyof AiConfig['features'], string> = {
@@ -124,6 +144,8 @@ export default function AdminAISettings() {
     openai:    { apiKey: '', baseURL: '', model: '', showKey: false, revealing: false },
     xai:       { apiKey: '', baseURL: '', model: '', showKey: false, revealing: false },
     minimax:   { apiKey: '', baseURL: '', model: '', showKey: false, revealing: false },
+    gemini:    { apiKey: '', baseURL: '', model: '', showKey: false, revealing: false },
+    custom:    { apiKey: '', baseURL: '', model: '', showKey: false, revealing: false },
   });
   const [savingProviderDraft, setSavingProviderDraft] = useState<ProviderKey | null>(null);
 
@@ -139,7 +161,7 @@ export default function AdminAISettings() {
       // (we do NOT pull the api key itself — that requires the explicit reveal action)
       setProviderDrafts(prev => {
         const next = { ...prev };
-        for (const p of ['anthropic', 'openai', 'xai', 'minimax'] as ProviderKey[]) {
+        for (const p of ['anthropic', 'openai', 'xai', 'minimax', 'gemini', 'custom'] as ProviderKey[]) {
           next[p] = {
             ...next[p],
             apiKey: '',  // always start blank; user must type to overwrite
@@ -279,7 +301,7 @@ export default function AdminAISettings() {
   };
 
   const handleClearApiKey = async (provider: ProviderKey) => {
-    if (!confirm(`Clear the stored API key for ${PROVIDER_META[provider].label}?\n\nThe system will fall back to the env var (${({anthropic:'ANTHROPIC_API_KEY',openai:'OPENAI_API_KEY',xai:'XAI_API_KEY',minimax:'MINIMAX_API_KEY'})[provider]}) or be unconfigured.`)) return;
+    if (!confirm(`Clear the stored API key for ${PROVIDER_META[provider].label}?\n\nThe system will fall back to the env var (${({anthropic:'ANTHROPIC_API_KEY',openai:'OPENAI_API_KEY',xai:'XAI_API_KEY',minimax:'MINIMAX_API_KEY',gemini:'GEMINI_API_KEY',custom:'CUSTOM_API_KEY'})[provider]}) or be unconfigured.`)) return;
     setSavingProviderDraft(provider);
     setError('');
     try {
